@@ -1,0 +1,7 @@
+include LICENSE
+include README.md
+include CITATION.cff
+include CHANGELOG.md
+recursive-include dentdeid/data *.json
+recursive-include tests *.py *.js
+include docs/*.js

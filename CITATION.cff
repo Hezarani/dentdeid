@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use DentDeID in your research, please cite it as below."
+title: "DentDeID: open, tested de-identification for dental images"
+abstract: >-
+  DentDeID removes patient-identifying information from dental images: DICOM attributes following
+  the DICOM PS3.15 (2026d) Basic Application Level Confidentiality Profile (rule tables generated from
+  the standard), burned-in text (a dental-aware morphological detector with an identical JavaScript
+  port), EXIF/GPS/XMP metadata and identifying file names of exported images and screenshots, faces in
+  extra-oral photographs, and the facial re-identification risk of CBCT volumes. Every output is
+  re-opened and re-checked, failures are quarantined, and audit reports contain no patient
+  identifiers. It ships a Python library and CLI, a zero-install web application, and DentDeID-Synth,
+  a synthetic benchmark with answer keys. Validated on synthetic data only.
+type: software
+authors:
+  - family-names: "Boustani Hezarani"
+    given-names: "Hossein"
+    orcid: "https://orcid.org/0009-0007-8481-0498"
+    affiliation: "Independent researcher, Ankara, Türkiye"
+version: "0.1.0"
+date-released: "2026-09-30"
+license: MIT
+repository-code: "https://github.com/Hezarani/dentdeid"
+url: "https://github.com/Hezarani/dentdeid"
+keywords:
+  - de-identification
+  - dental imaging
+  - dentistry
+  - DICOM
+  - PS3.15
+  - burned-in text
+  - privacy
+  - CBCT
+  - panoramic radiograph
+  - HIPAA
+  - GDPR

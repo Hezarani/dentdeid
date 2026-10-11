@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DentDeID — de-identify dental images in your browser</title>
+<meta name="description" content="Remove names, dates of birth, IDs, EXIF/GPS metadata and faces from dental radiographs, CBCT screenshots and clinical photos — locally in your browser. Open source, follows DICOM PS3.15.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://hezarani.github.io/dentdeid/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DentDeID">
+<meta property="og:title" content="DentDeID — share the case, not the patient">
+<meta property="og:description" content="Open, tested de-identification for dental images. Runs in your browser; nothing is uploaded.">
+<meta property="og:url" content="https://hezarani.github.io/dentdeid/">
+<meta property="og:image" content="https://hezarani.github.io/dentdeid/social-preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="DentDeID — “Share the case, not the patient.” A synthetic panoramic radiograph shown before (patient name, date of birth and ID in the header) and after de-identification (header text gone).">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image:alt" content="A synthetic panoramic radiograph before and after DentDeID removed the patient name, date of birth and ID from its header.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230a7c86'/%3E%3Cpath d='M20 18c-5 0-8 5-7 11 1 5 3 8 4 14 1 5 2 9 5 9 3 0 3-6 5-10 1-2 3-2 4 0 2 4 2 10 5 10 3 0 4-4 5-9 1-6 3-9 4-14 1-6-2-11-7-11-4 0-6 2-9 2s-5-2-9-2z' fill='white'/%3E%3Cpath d='M14 50 50 14' stroke='%230a7c86' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M14 50 50 14' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root {
+  --bg: #f5f5f7; --surface: #ffffff; --surface-2: #f9f9fb; --text: #1d1d1f; --text-2: #5e5e63; --text-3: #6e6e73;
+  --hairline: rgba(0,0,0,.08); --hairline-2: rgba(0,0,0,.14); --fill: rgba(0,0,0,.08); --fill-2: rgba(0,0,0,.14);
+  --accent: #0a7c86; --accent-press: #086a73; --accent-soft: rgba(10,124,134,.10); --accent-text: #086a73; --on-accent: #fff;
+  --redact: #e5484d; --face: #d97706; --ok: #1a7f45; --warn: #9a5b00; --warn-soft: rgba(217,119,6,.10);
+  --suggest: #0a84ff;
+  --stage: #0b0b0c; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  --bar: rgba(245,245,247,.72); --radius: 18px; --radius-s: 12px;
+  --bar-h: 49px; --stage-top: 124px;
+  --spring: cubic-bezier(.22,1,.36,1);
+  font: 100%/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  color: var(--text); background: var(--bg);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  scroll-padding-top: calc(var(--bar-h) + 12px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000; --surface: #1c1c1e; --surface-2: #232326; --text: #f5f5f7; --text-2: #a1a1a6; --text-3: #98989d;
+    --hairline: rgba(255,255,255,.10); --hairline-2: rgba(255,255,255,.18); --fill: rgba(255,255,255,.10); --fill-2: rgba(255,255,255,.18);
+    --accent: #45c4cf; --accent-press: #37aab4; --accent-soft: rgba(69,196,207,.14); --accent-text: #45c4cf; --on-accent: #00262a;
+    --redact: #ff6369; --face: #f5a524; --ok: #4cc38a; --warn: #f5a524; --warn-soft: rgba(245,165,36,.12);
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35); --bar: rgba(0,0,0,.62);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { min-height: 100vh; background: var(--bg); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; border-radius: 8px; }
+[hidden] { display: none !important; }
+[tabindex="-1"]:focus { outline: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* 44 px hit areas without making controls look bigger (HIG); the pseudo-element takes the taps */
+.hit { position: relative; }
+.hit::after { content: ""; position: absolute; inset: -4px 0; }
+
+/* ---------- bar ---------- */
+.bar { position: sticky; top: 0; z-index: 20; backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: var(--bar); border-bottom: 1px solid var(--hairline); }
+.bar-in { max-width: 1240px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; letter-spacing: -.01em; position: relative; }
+.brand::after { content: ""; position: absolute; inset: -8px -4px; }
+.brand:hover { text-decoration: none; }
+.brand svg { width: 28px; height: 28px; flex: none; }
+.brand small { font-weight: 400; color: var(--text-2); font-size: .82rem; letter-spacing: 0; }
+.bar nav { margin-left: auto; display: flex; gap: 4px; }
+.bar nav a { color: var(--text-2); font-size: .88rem; padding: 6px 10px; border-radius: 8px; white-space: nowrap; position: relative; }
+.bar nav a::after { content: ""; position: absolute; inset: -6px 0; }
+@media (max-width: 640px) { .brand small, .bar nav a.wide { display: none; } .bar-in { padding: 10px 14px; } main { padding: 0 14px 48px; } }
+.bar nav a:hover { color: var(--text); background: var(--fill); text-decoration: none; }
+
+main { max-width: 1240px; margin: 0 auto; padding: 0 20px 64px; }
+
+/* ---------- buttons ---------- */
+.btn { appearance: none; border: 0; font: inherit; font-size: .92rem; font-weight: 500; cursor: pointer; position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 0 16px;
+  border-radius: 999px; color: var(--text); background: var(--fill); transition: transform 120ms ease-out, background-color 160ms ease; }
+.btn::after { content: ""; position: absolute; inset: -4px 0; }
+.btn:hover { background: var(--fill-2); }
+.btn:active { transform: scale(.97); transition-duration: 60ms; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; transform: none; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-press); }
+.btn.quiet { background: transparent; color: var(--accent); padding: 0 10px; }
+.btn.quiet:hover { background: var(--accent-soft); }
+.btn.on { background: var(--accent-soft); color: var(--accent-text); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.btn svg { width: 16px; height: 16px; }
+.btn.icon { padding: 0 12px; }
+@media (max-width: 640px) { .btn .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .btn.icon { min-width: 44px; } }
+
+/* ---------- start ---------- */
+.hero { text-align: center; padding: clamp(40px, 8vw, 88px) 0 28px; }
+.hero h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.06; letter-spacing: -.028em; margin: 0 0 14px; font-weight: 700; }
+.hero p.lede { font-size: clamp(1.02rem, 1.6vw, 1.22rem); color: var(--text-2); max-width: 680px; margin: 0 auto; letter-spacing: -.005em; }
+.drop { margin: 34px auto 0; max-width: 760px; display: grid; place-items: center; gap: 10px; padding: 44px 24px; text-align: center;
+  background: var(--surface); border-radius: 24px; box-shadow: var(--shadow); border: 1.5px dashed var(--hairline-2);
+  cursor: pointer; transition: border-color 180ms ease, background-color 180ms ease, transform 180ms var(--spring); }
+.drop:hover { border-color: var(--accent); }
+.drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); transform: scale(1.01); }
+.drop .icon { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.drop .icon svg { width: 26px; height: 26px; }
+.drop strong { font-size: 1.15rem; letter-spacing: -.01em; }
+.drop span { color: var(--text-2); font-size: .9rem; }
+.samples { margin: 18px auto 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px 8px; color: var(--text-2); font-size: .9rem; }
+.chip { appearance: none; font: inherit; font-size: .86rem; border: 1px solid var(--hairline-2); background: var(--surface); color: var(--text);
+  border-radius: 999px; padding: 6px 12px; cursor: pointer; position: relative; transition: transform 120ms ease-out, border-color 160ms ease; }
+.chip::after { content: ""; position: absolute; inset: -6px -1px; }   /* 35 px chip → 45 px target */
+.chip:hover { border-color: var(--accent); }
+.chip:active { transform: scale(.97); }
+.trust { margin: 30px auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; color: var(--text-2); font-size: .88rem; }
+.trust span { display: inline-flex; align-items: center; gap: 8px; }
+.trust svg { width: 16px; height: 16px; color: var(--ok); }
+
+/* ---------- workspace ---------- */
+#work { display: none; padding-top: 20px; }
+#work.show { display: block; animation: rise 420ms var(--spring) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.toolbar { position: sticky; top: calc(var(--bar-h) + 3px); z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 8px; padding: 10px;
+  margin-bottom: 14px; border-radius: 16px; background: var(--bar); backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px); border: 1px solid var(--hairline); }
+.filechip { font-size: .86rem; color: var(--text-2); padding: 0 8px; max-width: 42ch; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filechip b { color: var(--text); font-weight: 600; }
+.seg { display: inline-flex; background: var(--fill); border-radius: 999px; padding: 3px; margin-left: auto; }
+.seg button { appearance: none; border: 0; font: inherit; font-size: .86rem; font-weight: 500; padding: 5px 14px; border-radius: 999px; position: relative;
+  background: transparent; color: var(--text-2); cursor: pointer; transition: background-color 200ms ease, color 200ms ease; }
+.seg button::after { content: ""; position: absolute; inset: -7px 0; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+
+.stage { background: var(--stage); border-radius: var(--radius); padding: 14px; display: grid; place-items: center; min-height: 320px;
+  box-shadow: var(--shadow); position: relative; overflow: hidden; }
+/* after the base rule, so the desktop sticky position is not overridden */
+@media (min-width: 961px) { .grid > .stage { position: sticky; top: var(--stage-top); } }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } .seg { margin-left: 0; } }
+.frame { position: relative; width: 100%; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; border-radius: 6px; }
+.frame.drawing { touch-action: none; }         /* only while drawing: otherwise a swipe scrolls the page */
+.frame:focus-visible { outline-offset: 3px; }
+.frame canvas { display: block; width: 100%; height: 100%; border-radius: 6px; }
+.frame svg.ov { position: absolute; inset: 0; width: 100%; height: 100%; cursor: default; overflow: visible; }
+.frame.drawing svg.ov { cursor: crosshair; }
+.scanning { position: absolute; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.35); color: #fff; font-size: .95rem; }
+.scanning.show { display: grid; }
+.scanning .pill { background: rgba(28,28,30,.78); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 10px 16px; border-radius: 18px;
+  display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; min-width: 230px; }
+.scanning .bar-p { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.2); overflow: hidden; }
+.scanning .bar-p i { display: block; height: 100%; width: 0; background: #fff; border-radius: 2px; transition: width 200ms linear; }
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; animation: spin 900ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+rect.r { vector-effect: non-scaling-stroke; transition: fill-opacity 180ms ease, stroke-opacity 180ms ease; outline: none; }
+rect.r.text.on { fill: #000; fill-opacity: .86; stroke: var(--redact); stroke-width: 2; }
+rect.r.text.off { fill: none; stroke: #fff; stroke-opacity: .6; stroke-width: 1.5; stroke-dasharray: 5 4; }
+rect.r.suggest.off { fill: #0a84ff; fill-opacity: .10; stroke: var(--suggest); stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 6 4; }
+rect.r.manual.on { fill: #000; fill-opacity: .86; stroke: var(--accent); stroke-width: 2; }
+rect.r.manual.off { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; }
+rect.r.face { fill: var(--face); fill-opacity: .28; stroke: var(--face); stroke-width: 2.5; }
+rect.r.keep { fill: none; stroke: var(--ok); stroke-width: 2.5; stroke-dasharray: 8 5; }
+rect.r.hot { stroke-width: 3.5; fill-opacity: .55; }
+rect.r:focus-visible, rect.r:focus { stroke: #fff; stroke-width: 3; stroke-dasharray: none; }
+rect.draft { fill: var(--accent); fill-opacity: .15; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+path.dim { fill: rgba(0,0,0,.55); pointer-events: none; }
+
+/* ---------- inspector ---------- */
+.side { display: grid; gap: 14px; }
+.card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 16px 14px; }
+.card h2 { font-size: .98rem; margin: 0 0 4px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+.card h2 .n { margin-left: auto; font-size: .78rem; font-weight: 600; color: var(--text-2); background: var(--fill); padding: 2px 8px; border-radius: 999px; }
+.card p { margin: 4px 0 8px; color: var(--text-2); font-size: .88rem; }
+.card .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--redact); flex: none; }
+.card .dot.meta { background: var(--accent); } .card .dot.face { background: var(--face); } .card .dot.ok { background: var(--ok); }
+ul.items { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; max-height: 280px; overflow: auto; }
+ul.items li { display: flex; align-items: center; gap: 10px; padding: 0 8px; min-height: 40px; border-radius: 10px; font-size: .88rem; }
+ul.items li:hover, ul.items li.hot { background: var(--surface-2); }
+ul.items li .sub { color: var(--text-3); font-size: .8rem; margin-left: auto; white-space: nowrap; }
+ul.items li.warn { color: var(--warn); }
+ul.items li.suggest .sub { color: var(--suggest); }
+@media (prefers-color-scheme: light) { ul.items li.suggest .sub { color: #0060c7; } }
+ul.items label.row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; min-height: 44px; cursor: pointer; }
+ul.items input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--redact); flex: none; margin: 0; }
+ul.items button.x { appearance: none; border: 0; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 8px; font-size: 1.1rem;
+  width: 32px; height: 32px; display: grid; place-items: center; flex: none; position: relative; margin-right: -4px; }
+ul.items button.x::after { content: ""; position: absolute; inset: -6px; }
+ul.items button.x:hover { color: var(--redact); background: var(--fill); }
+@media (pointer: coarse) { ul.items li { min-height: 44px; } ul.items button.x { width: 44px; height: 44px; } }
+.tools { display: flex; flex-wrap: wrap; gap: 10px 8px; margin-top: 10px; }
+.hint { font-size: .82rem; color: var(--text-3); margin-top: 8px; }
+.callout { border-radius: var(--radius-s); background: var(--warn-soft); color: var(--text); padding: 10px 12px; font-size: .85rem; margin-top: 8px; }
+.callout b { color: var(--warn); }
+label.check { display: flex; gap: 10px; align-items: center; font-size: .88rem; margin: 6px 0 8px; padding: 4px 0; min-height: 48px; cursor: pointer; }
+label.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); flex: none; }
+label.check input:disabled + span { opacity: .55; }
+select { font: inherit; font-size: .88rem; min-height: 44px; padding: 6px 10px; border-radius: 12px; border: 1px solid var(--hairline-2); background: var(--surface); color: var(--text); }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.done { display: none; margin-top: 10px; font-size: .86rem; color: var(--ok); }
+.done.show { display: block; animation: rise 360ms var(--spring) both; }
+.risk { font-size: .82rem; color: var(--text-2); line-height: 1.45; }
+.risk b { color: var(--text); }
+
+/* ---------- about ---------- */
+.about { margin-top: 64px; }
+.about h2.sec { font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -.02em; line-height: 1.15; margin: 0 0 8px; }
+.about p.sub { color: var(--text-2); margin: 0 0 22px; max-width: 760px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 14px; }
+.cards .card h3 { margin: 0 0 6px; font-size: 1rem; letter-spacing: -.01em; }
+.cards .card p { margin: 0; }
+pre { max-width: 100%; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 14px; overflow-x: auto;
+  white-space: pre; font: .84rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+.two > .card { min-width: 0; }
+@media (max-width: 800px) { .two { grid-template-columns: minmax(0, 1fr); } }
+footer { max-width: 1240px; margin: 0 auto; padding: 28px 20px 48px; color: var(--text-3); font-size: .82rem; border-top: 1px solid var(--hairline); }
+footer p { margin: 4px 0; }
+footer a { position: relative; }
+footer a::after { content: ""; position: absolute; inset: -15px -4px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; background: rgba(28,28,30,.9); color: #fff;
+  padding: 8px 8px 8px 16px; min-height: 44px; border-radius: 22px; font-size: .9rem; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  display: flex; align-items: center; gap: 12px; transition: opacity 220ms ease, transform 320ms var(--spring); pointer-events: none; z-index: 50;
+  max-width: calc(100vw - 32px); width: max-content; }
+.toast .msg { padding: 2px 8px 2px 0; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast button { appearance: none; border: 0; font: inherit; font-weight: 600; color: #6fe3ec; background: rgba(255,255,255,.12); border-radius: 999px;
+  min-height: 32px; padding: 0 14px; cursor: pointer; position: relative; flex: none; }
+.toast button::after { content: ""; position: absolute; inset: -6px -4px; }
+.toast.show button { pointer-events: auto; }
+.toast.error { background: rgba(120,20,24,.94); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+  .spin { animation: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bar, .toolbar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .toast, .scanning .pill { background: #1c1c1e; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  :root { --hairline: rgba(0,0,0,.35); --hairline-2: rgba(0,0,0,.6); --text-2: #3a3a3c; --text-3: #48484a; --accent: #075f67; --accent-text: #075f67; }
+  .card { border: 1px solid var(--hairline-2); }
+  /* filled controls keep a light fill and get an outline instead of a darker fill */
+  .btn, .seg, .card h2 .n { box-shadow: inset 0 0 0 1.5px var(--hairline-2); }
+  .btn.primary, .btn.quiet { box-shadow: none; }
+  .btn.on { box-shadow: inset 0 0 0 2px var(--accent); }
+  .seg button { color: var(--text); }
+  .seg button[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--text); }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root { --hairline: rgba(255,255,255,.38); --hairline-2: rgba(255,255,255,.62); --text-2: #d1d1d6; --text-3: #c7c7cc;
+          --accent: #6fdde6; --accent-text: #6fdde6; --bar: rgba(0,0,0,.85); }
+}
+@media print { .bar, .toolbar, #start, .about, footer { display: none !important; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <a class="brand" href="./" aria-label="DentDeID home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#0a7c86"/><path d="M20 18c-5 0-8 5-7 11 1 5 3 8 4 14 1 5 2 9 5 9 3 0 3-6 5-10 1-2 3-2 4 0 2 4 2 10 5 10 3 0 4-4 5-9 1-6 3-9 4-14 1-6-2-11-7-11-4 0-6 2-9 2s-5-2-9-2z" fill="#fff"/><path d="M14 50 50 14" stroke="#0a7c86" stroke-width="7" stroke-linecap="round"/><path d="M14 50 50 14" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>DentDeID <small>dental image de-identification</small></span>
+    </a>
+    <nav aria-label="Links">
+      <a href="#how" class="wide">How it works</a>
+      <a href="#python">Python</a>
+      <a href="https://github.com/Hezarani/dentdeid" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="start" aria-labelledby="h1">
+    <div class="hero">
+      <h1 id="h1">Share the case,<br>not the patient.</h1>
+      <p class="lede">Remove names, dates of birth, IDs, hidden metadata and faces from dental radiographs, CBCT screenshots and clinical photos. Everything happens in this browser tab — nothing is uploaded.</p>
+    </div>
+    <div class="drop" id="drop" role="button" tabindex="0" aria-describedby="drop-hint">
+      <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
+      <strong>Drop a dental image here</strong>
+      <span id="drop-hint">or click to choose — or paste · JPEG · PNG (incl. 16-bit) · WebP · BMP · GIF · DICOM</span>
+      <input id="file" type="file" accept="image/*,.dcm,.dicom,application/dicom" hidden>
+    </div>
+    <div class="samples" aria-label="Synthetic examples">
+      <span>No image to hand? Try a synthetic one:</span>
+      <button class="chip" data-sample="samples/sample-panoramic.jpg">Panoramic · JPEG with GPS</button>
+      <button class="chip" data-sample="samples/sample-periapical.png">Periapical · colour label</button>
+      <button class="chip" data-sample="samples/sample-cbct-screenshot.png">CBCT screenshot</button>
+      <button class="chip" data-sample="samples/sample-bitewing.dcm">Bitewing · DICOM</button>
+    </div>
+    <div class="trust">
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Runs entirely on your device</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Built on DICOM PS3.15 (2026d)</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Open source · MIT · citable</span>
+    </div>
+  </section>
+
+  <section id="work" aria-label="Workspace">
+    <div class="toolbar" role="toolbar" aria-label="Image tools">
+      <button class="btn icon" id="back" title="Open another image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span class="lbl">New image</span></button>
+      <span class="filechip" id="filechip"></span>
+      <div class="seg" role="group" aria-label="View">
+        <button id="v-review" aria-pressed="true">Review</button>
+        <button id="v-result" aria-pressed="false">Result</button>
+      </div>
+      <button class="btn icon" id="undo" disabled title="Undo (Ctrl/⌘ Z)" aria-keyshortcuts="Control+Z Meta+Z"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg><span class="lbl">Undo</span></button>
+      <button class="btn icon" id="redo" disabled title="Redo (Ctrl/⌘ Shift Z, or Ctrl Y)" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg><span class="lbl">Redo</span></button>
+    </div>
+    <div class="grid">
+      <div class="stage" id="stage">
+        <div class="frame" id="frame" tabindex="0" role="group" aria-label="Image" aria-describedby="frame-hint">
+          <canvas id="cv" role="img" aria-label="The image being de-identified"></canvas>
+          <svg class="ov" id="ov" role="group" aria-label="Boxes on the image"></svg>
+        </div>
+        <p class="sr-only" id="frame-hint">To place a box with the keyboard, choose Add a box, Hide a face or Keep only the smile, then press Enter here. Tab to a box you added: arrow keys move it, Shift with arrow keys resizes it, Delete removes it.</p>
+        <div class="scanning" id="scanning" role="status"><div class="pill"><div class="spin" aria-hidden="true"></div><span id="scan-msg">Looking for burned-in text…</span><div class="bar-p" aria-hidden="true"><i id="scan-bar"></i></div></div></div>
+      </div>
+      <aside class="side" aria-label="Findings">
+        <section class="card" id="c-text">
+          <h2><span class="dot"></span>Text burned into the image <span class="n" id="n-text">0</span></h2>
+          <p id="text-status">—</p>
+          <ul class="items" id="l-text"></ul>
+          <div class="tools">
+            <button class="btn" id="t-add" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M12 9v6M9 12h6"/></svg>Add a box</button>
+            <button class="btn quiet" id="t-scan" hidden>Black out all suggestions</button>
+          </div>
+          <div class="hint" id="t-hint">Missed something? Choose <b>Add a box</b> and drag over it. Tap a box to keep or remove it.</div>
+        </section>
+        <section class="card" id="c-meta">
+          <h2><span class="dot meta"></span>Hidden data in the file <span class="n" id="n-meta">0</span></h2>
+          <p id="meta-status">—</p>
+          <ul class="items" id="l-meta"></ul>
+        </section>
+        <section class="card" id="c-face">
+          <h2><span class="dot face"></span>Faces</h2>
+          <p id="face-status">—</p>
+          <div class="tools">
+            <button class="btn" id="f-hide" aria-pressed="false">Hide a face</button>
+            <button class="btn" id="f-keep" aria-pressed="false">Keep only the smile</button>
+            <button class="btn quiet" id="f-auto" hidden>Find faces</button>
+          </div>
+          <ul class="items" id="l-face"></ul>
+          <div class="hint">Black bars over the eyes are not offered: studies show they leave most faces recognisable. Blur the whole face or crop to the smile.</div>
+        </section>
+        <section class="card" id="c-export">
+          <h2><span class="dot ok"></span>Download a clean copy</h2>
+          <div class="row" style="margin-top:8px">
+            <label for="fmt" class="sr-only">Format</label>
+            <select id="fmt"><option value="image/png">PNG (lossless)</option><option value="image/jpeg">JPEG (smaller)</option></select>
+          </div>
+          <label class="check"><input type="checkbox" id="checked"><span>I have looked over the <b>whole image</b> in <b>Result</b> view and nothing identifying is left.</span></label>
+          <button class="btn primary" id="dl" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12"/><path d="m6 10 6 6 6-6"/><path d="M4 20h16"/></svg>Download</button>
+          <div class="done" id="done" role="status"></div>
+          <div class="callout"><b>De-identified is not anonymous.</b> Teeth, restorations and implants can identify a person. Share only with the patient's consent or under your institution's rules.</div>
+        </section>
+      </aside>
+    </div>
+  </section>
+
+  <section class="about" id="how" aria-labelledby="how-h" tabindex="-1">
+    <h2 class="sec" id="how-h">What DentDeID removes — and what it can't.</h2>
+    <p class="sub">Dental images leak identity in more places than a name field. DentDeID checks each one and tells you what it found, without ever showing or storing the values.</p>
+    <div class="cards">
+      <div class="card"><h3>Burned-in text</h3><p>Names, dates of birth, IDs and clinic details drawn into panoramic headers, screenshot corners and colour labels. A dental-aware detector is designed not to mistake crowns, restorations, implants and brackets for text. In colour photos, text-like areas are only suggested for you to confirm.</p></div>
+      <div class="card"><h3>Hidden metadata</h3><p>EXIF camera data, <b>GPS location</b>, capture time, XMP, comments and PNG text chunks — and every DICOM header field, private tag and overlay. The download is a newly encoded PNG or JPEG that carries none of it: no EXIF, XMP, comments, text chunks or colour profile.</p></div>
+      <div class="card"><h3>File names</h3><p>Exports named like <i>Surname_Name_1987-03-12_PAN.jpg</i> get a neutral name.</p></div>
+      <div class="card"><h3>Faces</h3><p>Extra-oral photos: blur the whole face, or keep only the smile. CBCT volumes can be rendered into a face — the Python tool flags that risk.</p></div>
+    </div>
+    <div class="two">
+      <div class="card"><h3>What no tool can remove</h3><p class="risk">The dentition itself is identifying — in 2026 forensic studies, software ranked the right person first for 65–75% of panoramic radiographs when searching galleries of about 200 people. And automatic detection can miss faint text drawn over teeth or bone. Always check the Result view yourself before sharing.</p></div>
+      <div class="card" id="python" tabindex="-1"><h3>Batches, DICOM-to-DICOM, research datasets</h3><p class="risk">The Python package applies the full DICOM PS3.15 Basic Profile with keyed pseudonyms, shifted dates, CBCT face-risk checks, fail-closed quarantine and an audit report. It also reads TIFF files and big-endian or compressed DICOM that browsers can't open (some compressions need an extra decoder plugin).</p>
+<pre>pip install dentdeid
+dentdeid run exports/ -o deidentified/ --profile share</pre></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p><b>DentDeID</b> v0.1.0 · MIT licence · by Hossein Boustani Hezarani (<a href="https://orcid.org/0009-0007-8481-0498" rel="noopener">ORCID</a>) · <a href="https://github.com/Hezarani/dentdeid#references--prior-work" rel="noopener">References</a> · <a href="https://github.com/Hezarani/dentdeid#cite" rel="noopener">How to cite</a></p>
+  <p>A research and clinical-communication aid, not a legal or compliance guarantee. Synthetic examples only — no real patient appears on this site.</p>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="msg" id="toast-msg"></span><button id="toast-act" type="button" hidden></button></div>
+
+<script src="detector.js"></script>
+<script src="png16.js"></script>
+<script src="dicom-lite.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
