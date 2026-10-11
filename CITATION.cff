@@ -17,7 +17,7 @@ authors:
     orcid: "https://orcid.org/0009-0007-8481-0498"
     affiliation: "Independent researcher, Ankara, Türkiye"
 version: "0.1.0"
-date-released: "2026-09-30"
+date-released: "2026-10-11"
 license: MIT
 repository-code: "https://github.com/Hezarani/dentdeid"
 url: "https://github.com/Hezarani/dentdeid"
@@ -33,3 +33,14 @@ keywords:
   - panoramic radiograph
   - HIPAA
   - GDPR
+doi: 10.5281/zenodo.23296067
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23296067
+    description: "Concept DOI — all versions (cite this)"
+  - type: doi
+    value: 10.5281/zenodo.23296068
+    description: "Version DOI — this release"
+  - type: doi
+    value: 10.5281/zenodo.23296121
+    description: "DentDeID-Synth benchmark dataset"

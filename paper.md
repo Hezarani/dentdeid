@@ -17,7 +17,7 @@ authors:
 affiliations:
   - name: Independent researcher, Ankara, Türkiye
     index: 1
-date: 30 September 2026
+date: 11 October 2026
 bibliography: paper.bib
 ---
 

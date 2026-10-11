@@ -3,7 +3,7 @@
 All notable changes to DentDeID are documented here. The project follows
 [Semantic Versioning](https://semver.org/).
 
-## [0.1.0] — 2026-09-30
+## [0.1.0] — 2026-10-11
 
 First public release.
 

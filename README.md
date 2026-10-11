@@ -14,6 +14,7 @@ you exactly what it did. Its reports are designed never to contain a patient ide
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Hezarani/dentdeid/blob/main/LICENSE)
 [![Tests](https://github.com/Hezarani/dentdeid/actions/workflows/tests.yml/badge.svg)](https://github.com/Hezarani/dentdeid/actions/workflows/tests.yml)
 [![Live demo](https://img.shields.io/badge/demo-in%20your%20browser-0a7c86.svg)](https://hezarani.github.io/dentdeid/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23296067.svg)](https://doi.org/10.5281/zenodo.23296067)
 [![DICOM PS3.15](https://img.shields.io/badge/DICOM-PS3.15%202026d-0a7c86.svg)](https://github.com/Hezarani/dentdeid/blob/main/docs/COMPLIANCE.md)
 
 > ⚠️ **De-identified is not anonymous.** Teeth, restorations and implants are identifying — in 2026
@@ -176,9 +177,12 @@ If DentDeID or DentDeID-Synth helps your work, please cite them — see [`CITATI
   title   = {DentDeID: open, tested de-identification for dental images},
   year    = {2026},
   version = {0.1.0},
-  url     = {https://github.com/Hezarani/dentdeid}
+  url     = {https://github.com/Hezarani/dentdeid},
+  doi     = {10.5281/zenodo.23296067}
 }
 ```
+
+Dataset DOI: [10.5281/zenodo.23296121](https://doi.org/10.5281/zenodo.23296121) (DentDeID-Synth v1.0, CC BY 4.0)
 
 ## References & prior work
 
